@@ -39,6 +39,9 @@ def run_example(creds, calendar_name):
                                               orderBy='startTime').execute()
         events = events_result.get('items', [])
         categories = defaultdict(lambda: defaultdict(lambda: datetime.timedelta(0)))
+        for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
+            categories[day]["FreeTime"] = datetime.timedelta(days=1)
+
         for event in events:
             beg = datetime.datetime.fromisoformat(event['start']['dateTime'])
             end = datetime.datetime.fromisoformat(event['end']['dateTime'])
@@ -49,6 +52,7 @@ def run_example(creds, calendar_name):
                 cat_match = cat_match.group(1)
             category = cat_match
             categories[beg.strftime('%A')][category] += end-beg
+            categories[beg.strftime('%A')]['FreeTime'] += beg-end
 
         service.close()
 
@@ -67,17 +71,10 @@ def run_example(creds, calendar_name):
             print(day, " ", end="")
             for category in categories[day]:
                 categories_per_week[category] += categories[day][category]
-                categories[day][category] = str(categories[day][category].seconds//3600)+"h"+str((categories[day][category].seconds//60)%60)+"m"
+                categories[day][category] = str((categories[day][category].days * 24 * 3600 + categories[day][category].seconds)//3600)+"h"+str((categories[day][category].seconds//60)%60)+"m"
 
         for k,v in categories_per_week.items():
-            categories_per_week[k] = str(categories_per_week[k].seconds//3600) + "h" + str((categories_per_week[k].seconds//60)%60) + "m"
-
-        # df1 = pd.DataFrame(data=categories)
-        # df1 = df1.append(categories_per_week)
-        # print(df1)
-        # print(categories_per_week)
-        # with open("result.html", 'w') as f:
-        #     f.write(df1.to_html())
+            categories_per_week[k] = str((categories_per_week[k].days * 24 * 3600 + categories_per_week[k].seconds)//3600) + "h" + str((categories_per_week[k].seconds//60)%60) + "m"
 
         with open('result.html', 'w') as f:
             f.write(generate_html_with_css(categories))
