@@ -1,0 +1,8 @@
+wheel==0.40.0
+Pyyaml
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+setuptools==67.7.2
+pytz
+python-dateutil
