@@ -110,7 +110,7 @@ def generate_html_with_css(data):
 
     # Create the table body
     table_html += "<tbody>"
-    for inner_key in inner_keys:
+    for inner_key in sorted(inner_keys):
         table_html += "<tr>"
         table_html += f"<td class='first-column'>{inner_key}</td>"  # First column with the inner key
 
@@ -156,6 +156,7 @@ def generate_html_with_css(data):
 
     return full_html
 
+
 def dict_to_html_columns(data):
     html = "<style>"
     html += ".calendar-table {"
@@ -184,7 +185,8 @@ def dict_to_html_columns(data):
     html += "<br><h3>Values per week</h3>"
     html += "<table class='calendar-table'>"
     html += "<tr class='separator-row'><td colspan='2'></td></tr>"
-    for key, value in data.items():
+    for key in sorted(data.keys()):
+        value = data[key]
         html += "<tr>"
         html += f"<td><strong>{key}</strong></td>"
         html += f"<td>{value}</td>"
