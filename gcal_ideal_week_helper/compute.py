@@ -48,6 +48,8 @@ def run_example(creds, calendar_name):
             cat_match = regex_category.search(event['summary'])
             if cat_match is None:
                 cat_match = "Unknown"
+                print("Unknown task found:")
+                print(event['summary'])
             else:
                 cat_match = cat_match.group(1)
             category = cat_match
