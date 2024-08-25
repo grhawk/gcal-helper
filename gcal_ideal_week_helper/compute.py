@@ -1,4 +1,5 @@
 import datetime
+import logging
 import re
 from collections import defaultdict
 from typing import DefaultDict
@@ -7,6 +8,7 @@ import pytz as pytz
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import pandas as pd
+log = logging.getLogger('main')
 
 def run_example(creds, calendar_name):
 
@@ -23,7 +25,8 @@ def run_example(creds, calendar_name):
         calendars = service.calendarList().list(showDeleted=True, showHidden=True).execute()
 
         for cal in calendars.get('items', []):
-            if cal.get('summary', "") == calendar_name:
+            log.debug(f"Found calendar: {cal}")
+            if cal.get('summary', "") == calendar_name or cal.get('id', "") == calendar_name:
                 calendar_id = cal['id']
                 calendar_timezone = cal['timeZone']
                 break
@@ -79,7 +82,7 @@ def run_example(creds, calendar_name):
             categories_per_week[k] = str((categories_per_week[k].days * 24 * 3600 + categories_per_week[k].seconds)//3600) + "h" + str((categories_per_week[k].seconds//60)%60) + "m"
 
         with open('result.html', 'w') as f:
-            f.write(generate_html_with_css(categories))
+            #f.write(generate_html_with_css(categories))
             f.write(dict_to_html_columns(categories_per_week))
 
     except HttpError as error:
@@ -160,7 +163,11 @@ def generate_html_with_css(data):
 
 
 def dict_to_html_columns(data):
-    html = "<style>"
+    chart_script, chart_html = chart(data)
+    html = "<html>"
+    html += "<head>"
+    html += chart_script
+    html += "<style>"
     html += ".calendar-table {"
     html += "    width: 100%;"
     html += "    border-collapse: collapse;"
@@ -184,6 +191,8 @@ def dict_to_html_columns(data):
     html += "    height: 10px;"
     html += "}"
     html += "</style>"
+    html += "</head>"
+    html += "<body>"
     html += "<br><h3>Values per week</h3>"
     html += "<table class='calendar-table'>"
     html += "<tr class='separator-row'><td colspan='2'></td></tr>"
@@ -194,6 +203,47 @@ def dict_to_html_columns(data):
         html += f"<td>{value}</td>"
         html += "</tr>"
     html += "</table>"
+    html += chart_html
+    html += "</body>"
+    html += "</html>"
     return html
+
+def chart(data):
+
+    script = """
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+
+        var data = google.visualization.arrayToDataTable([
+          ['Task', 'Hours per Day'],
+        """
+
+    for key, value in data.items():
+        if key == "FreeTime":
+            continue
+        m = re.match('^(\d+)h(\d+)m$', value)
+        seconds = int(m.group(1)) * 3600 + int(m.group(2)) * 60
+        script += f"['{key}', {seconds}],"
+
+    script += """
+        ]);
+
+        var options = {
+          title: 'My Daily Activities'
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+
+        chart.draw(data, options);
+      }
+    </script>
+    """
+    html = '<div id="piechart" style="width: 900px; height: 500px;"></div>'
+
+    return script, html
 
 
