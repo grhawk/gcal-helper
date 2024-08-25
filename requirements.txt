@@ -6,3 +6,4 @@ google-auth-oauthlib
 setuptools==67.7.2
 pytz
 python-dateutil
+pandas
