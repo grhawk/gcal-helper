@@ -11,6 +11,8 @@ import argparse
 import logging
 import os
 
+from google.auth.exceptions import RefreshError
+
 import gcal_ideal_week_helper
 
 import gcal_ideal_week_helper.authorization
@@ -23,7 +25,14 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def main(args):
     """ Main entry point of the app """
-    creds = gcal_ideal_week_helper.authorization.credentials(ROOT_DIR)
+    try:
+        creds = gcal_ideal_week_helper.authorization.credentials(ROOT_DIR)
+    except RefreshError as e:
+        os.remove('token.json')
+        creds = gcal_ideal_week_helper.authorization.credentials(ROOT_DIR)
+        if creds is None:
+            raise e
+
     gcal_ideal_week_helper.compute.run_example(creds, args.calendar_name)
 
     return "Do some magic!"
