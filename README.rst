@@ -16,3 +16,5 @@ Features
 
 * TODO
 
+Here to get the credentials: https://developers.google.com/calendar/api/quickstart/python
+
