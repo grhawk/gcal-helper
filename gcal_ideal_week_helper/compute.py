@@ -82,7 +82,7 @@ def run_example(creds, calendar_name):
             categories_per_week[k] = str((categories_per_week[k].days * 24 * 3600 + categories_per_week[k].seconds)//3600) + "h" + str((categories_per_week[k].seconds//60)%60) + "m"
 
         with open('result.html', 'w') as f:
-            #f.write(generate_html_with_css(categories))
+            f.write(generate_html_with_css(categories))
             f.write(dict_to_html_columns(categories_per_week))
 
     except HttpError as error:
@@ -128,13 +128,16 @@ def generate_html_with_css(data):
     table_html += "</tbody>"
 
     # Combine the table headers and body
-    html = f"<table class='calendar-table'>{table_html}</table>"
+    # embed calendar
+    html = '<iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Europe%2FZurich&bgcolor=%23ffffff&showNav=0&showTitle=0&showDate=0&mode=WEEK&showTabs=0&showPrint=0&showCalendars=0&showTz=0&src=MDA5ODYzZWUwMzNkNDY3NTE1N2EzMGI5MWRlODAxZDMwNWNiNjA2NWZiZWQ4ODFjMTI1YWY0OTVjNzBiNjA4MUBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&color=%23F4511E" style="border:solid 1px #777" width="800" height="600" frameborder="0" scrolling="no"></iframe>'
+
+    html += f"<table class='calendar-table'>{table_html}</table>"
 
     # Define the CSS styles
     css = """
     <style>
         .calendar-table {
-            width: 100%;
+            width: 50%;
             border-collapse: collapse;
             font-family: Arial, sans-serif;
         }
@@ -169,7 +172,7 @@ def dict_to_html_columns(data):
     html += chart_script
     html += "<style>"
     html += ".calendar-table {"
-    html += "    width: 100%;"
+    html += "    width: 50%;"
     html += "    border-collapse: collapse;"
     html += "    font-family: Arial, sans-serif;"
     html += "}"
@@ -190,10 +193,18 @@ def dict_to_html_columns(data):
     html += "    padding: 0;"
     html += "    height: 10px;"
     html += "}"
+    html += ".row {"
+    html += "display: flex;"
+    html += "}"
+    html += ".column {"
+    html += "flex: 50%;"
+    html += "}"
     html += "</style>"
     html += "</head>"
     html += "<body>"
     html += "<br><h3>Values per week</h3>"
+    html += "<div class=\"row\">"
+    html += "<div class=\"column\">"
     html += "<table class='calendar-table'>"
     html += "<tr class='separator-row'><td colspan='2'></td></tr>"
     for key in sorted(data.keys()):
@@ -203,7 +214,11 @@ def dict_to_html_columns(data):
         html += f"<td>{value}</td>"
         html += "</tr>"
     html += "</table>"
+    html += "</div>"
+    html += "<div class=\"column\">"
     html += chart_html
+    html += "</div>"
+    html += "</div>"
     html += "</body>"
     html += "</html>"
     return html
